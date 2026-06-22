@@ -1,1 +1,29 @@
 
+name: Deploy DeployX
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd DeployX
+            git pull origin main
+            sudo docker build -t deployx:latest .
+            sudo docker stop deployx || true
+            sudo docker rm deployx || true
+            sudo docker run -d -p 80:80 --name deployx deployx:latest
